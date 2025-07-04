@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Authentication System</title>
+  <style>
+    body {
+      font-family: Arial;
+      background-color: #f2f2f2;
+      text-align: center;
+      margin-top: 50px;
+    }
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      margin: auto;
+      box-shadow: 0 0 10px gray;
+    }
+    input, button {
+      width: 90%;
+      padding: 10px;
+      margin: 8px 0;
+    }
+    .message {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h2 id="formTitle">Signup</h2>
+    <input type="text" id="username" placeholder="Enter Username"><br>
+    <input type="password" id="password" placeholder="Enter Password"><br>
+    <button onclick="submitForm()">Submit</button>
+    <p><a href="#" onclick="toggleMode()">Switch to <span id="toggleText">Login</span></a></p>
+    <p id="message" class="message"></p>
+  </div>
+
+  <script>
+    let isLogin = false;
+
+    function toggleMode() {
+      isLogin = !isLogin;
+      document.getElementById("formTitle").innerText = isLogin ? "Login" : "Signup";
+      document.getElementById("toggleText").innerText = isLogin ? "Signup" : "Login";
+      document.getElementById("message").innerText = "";
+    }
+
+    async function hashPassword(password) {
+      const encoded = new TextEncoder().encode(password);
+      const hash = await crypto.subtle.digest("SHA-256", encoded);
+      return [...new Uint8Array(hash)].map(x => x.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function submitForm() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const message = document.getElementById("message");
+
+      if (!username || !password) {
+        message.innerText = "Please fill in both fields.";
+        message.style.color = "red";
+        return;
+      }
+
+      const hashedPassword = await hashPassword(password);
+      let users = JSON.parse(localStorage.getItem("users") || "{}");
+
+      if (isLogin) {
+        if (users[username] === hashedPassword) {
+          message.innerText = "Login successful!";
+          message.style.color = "green";
+        } else {
+          message.innerText = "Invalid username or password.";
+          message.style.color = "red";
+        }
+      } else {
+        if (users[username]) {
+          message.innerText = "User already exists.";
+          message.style.color = "red";
+        } else {
+          users[username] = hashedPassword;
+          localStorage.setItem("users", JSON.stringify(users));
+          message.innerText = "Signup successful!";
+          message.style.color = "green";
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>
